@@ -1,3 +1,4 @@
+// === 📁 src/api/api.js ===
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../utils/constants';
@@ -14,20 +15,19 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Login API
+// Auth APIs
 export const login = (username, password) =>
   api.post('auth/login/', { username, password });
 
-// Registration API
 export const register = (username, email, password1, password2) =>
-  api.post('auth/registration/', {
-    username,
-    email,
-    password1,
-    password2,
-    role: 'user',          // ➡ Always default to "user"
-  });
+  api.post('auth/registration/', { username, email, password1, password2 });
 
+export const verifyEmail = ({ verification_code }) =>
+  api.post('auth/verify-email/', { verification_code });
+
+export const getUserProfile = (userId) => api.get(`users/${userId}/`);
+
+// Posts
 export const getPosts = () => api.get('api/posts/posts');
 
 export default api;

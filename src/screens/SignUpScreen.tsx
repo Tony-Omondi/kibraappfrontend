@@ -50,7 +50,6 @@ const SignUpScreen = () => {
       password2: false,
     };
 
-    // Username validation
     if (!username) {
       newErrors.username = true;
       Alert.alert('Error', 'Username is required');
@@ -61,7 +60,6 @@ const SignUpScreen = () => {
       isValid = false;
     }
 
-    // Email validation
     if (!email) {
       newErrors.email = true;
       Alert.alert('Error', 'Email is required');
@@ -72,7 +70,6 @@ const SignUpScreen = () => {
       isValid = false;
     }
 
-    // Password validation
     if (!password1) {
       newErrors.password1 = true;
       Alert.alert('Error', 'Password is required');
@@ -83,7 +80,6 @@ const SignUpScreen = () => {
       isValid = false;
     }
 
-    // Password confirmation
     if (password1 !== password2) {
       newErrors.password2 = true;
       Alert.alert('Error', 'Passwords do not match');
@@ -96,15 +92,13 @@ const SignUpScreen = () => {
     }
 
     try {
-      const res = await register(username, email, password1, password2);
-      Alert.alert('Success', 'Account created successfully!');
-      navigation.navigate('Login');
+      await register(username, email, password1, password2);
+      Alert.alert('Success', 'Account created! Check your email to verify.');
+      navigation.navigate('VerifyEmail'); // Navigate to VerifyEmailScreen
     } catch (err) {
       console.error(err.response?.data || err.message);
       let errorMessage = 'Registration failed. Please check your details.';
-      
       if (err.response?.data) {
-        // Handle different types of backend errors
         if (err.response.data.username) {
           errorMessage = `Username: ${err.response.data.username.join(' ')}`;
         } else if (err.response.data.email) {
@@ -115,7 +109,6 @@ const SignUpScreen = () => {
           errorMessage = err.response.data.non_field_errors.join('\n');
         }
       }
-      
       Alert.alert('Registration Failed', errorMessage);
     }
   };
@@ -151,7 +144,7 @@ const SignUpScreen = () => {
         value={username}
         onChangeText={(text) => {
           setUsername(text);
-          setErrors({...errors, username: false});
+          setErrors({ ...errors, username: false });
         }}
       />
 
@@ -162,7 +155,7 @@ const SignUpScreen = () => {
         value={email}
         onChangeText={(text) => {
           setEmail(text);
-          setErrors({...errors, email: false});
+          setErrors({ ...errors, email: false });
         }}
         keyboardType="email-address"
         autoCapitalize="none"
@@ -176,7 +169,7 @@ const SignUpScreen = () => {
         value={password1}
         onChangeText={(text) => {
           setPassword1(text);
-          setErrors({...errors, password1: false});
+          setErrors({ ...errors, password1: false });
         }}
       />
 
@@ -188,7 +181,7 @@ const SignUpScreen = () => {
         value={password2}
         onChangeText={(text) => {
           setPassword2(text);
-          setErrors({...errors, password2: false});
+          setErrors({ ...errors, password2: false });
         }}
       />
 
