@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
+  Text,
   StyleSheet,
   Image,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { login, googleLogin } from '../api/api';
+import { register, googleLogin } from '../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { GOOGLE_CLIENT_ID } from '../utils/constants';
 
@@ -18,13 +18,18 @@ GoogleSignin.configure({
   webClientId: GOOGLE_CLIENT_ID,
 });
 
-const LoginScreen = () => {
+const SignUpScreen = () => {
   const navigation = useNavigation();
+
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [password1, setPassword1] = useState('');
+  const [password2, setPassword2] = useState('');
   const [errors, setErrors] = useState({
     username: false,
-    password: false,
+    email: false,
+    password1: false,
+    password2: false,
   });
 
   const validateEmail = (email) => {
@@ -32,38 +37,56 @@ const LoginScreen = () => {
     return re.test(email);
   };
 
-  const validatePhone = (phone) => {
-    const re = /^[0-9]{10,15}$/;
-    return re.test(phone);
+  const validatePassword = (password) => {
+    return password.length >= 8;
   };
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     let isValid = true;
-    const newErrors = { username: false, password: false };
+    const newErrors = {
+      username: false,
+      email: false,
+      password1: false,
+      password2: false,
+    };
 
-    // Username validation (can be email or phone)
+    // Username validation
     if (!username) {
       newErrors.username = true;
-      Alert.alert('Error', 'Username/Email/Phone is required');
+      Alert.alert('Error', 'Username is required');
       isValid = false;
-    } else if (username.includes('@') && !validateEmail(username)) {
+    } else if (username.length < 4) {
       newErrors.username = true;
+      Alert.alert('Error', 'Username must be at least 4 characters');
+      isValid = false;
+    }
+
+    // Email validation
+    if (!email) {
+      newErrors.email = true;
+      Alert.alert('Error', 'Email is required');
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = true;
       Alert.alert('Error', 'Please enter a valid email address');
-      isValid = false;
-    } else if (!isNaN(username) && !validatePhone(username)) {
-      newErrors.username = true;
-      Alert.alert('Error', 'Please enter a valid phone number (10-15 digits)');
       isValid = false;
     }
 
     // Password validation
-    if (!password) {
-      newErrors.password = true;
+    if (!password1) {
+      newErrors.password1 = true;
       Alert.alert('Error', 'Password is required');
       isValid = false;
-    } else if (password.length < 8) {
-      newErrors.password = true;
+    } else if (!validatePassword(password1)) {
+      newErrors.password1 = true;
       Alert.alert('Error', 'Password must be at least 8 characters');
+      isValid = false;
+    }
+
+    // Password confirmation
+    if (password1 !== password2) {
+      newErrors.password2 = true;
+      Alert.alert('Error', 'Passwords do not match');
       isValid = false;
     }
 
@@ -73,21 +96,27 @@ const LoginScreen = () => {
     }
 
     try {
-      const res = await login(username, password);
-      await AsyncStorage.setItem('access_token', res.data.access);
-      await AsyncStorage.setItem('refresh_token', res.data.refresh);
-      await AsyncStorage.setItem('user_id', res.data.user.id.toString());
-      Alert.alert('Success', 'You are now logged in!');
-      navigation.replace('Home');
+      const res = await register(username, email, password1, password2);
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.navigate('Login');
     } catch (err) {
       console.error(err.response?.data || err.message);
-      let errorMessage = 'Check your credentials';
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (err.response?.data?.non_field_errors) {
-        errorMessage = err.response.data.non_field_errors.join('\n');
+      let errorMessage = 'Registration failed. Please check your details.';
+      
+      if (err.response?.data) {
+        // Handle different types of backend errors
+        if (err.response.data.username) {
+          errorMessage = `Username: ${err.response.data.username.join(' ')}`;
+        } else if (err.response.data.email) {
+          errorMessage = `Email: ${err.response.data.email.join(' ')}`;
+        } else if (err.response.data.password1) {
+          errorMessage = `Password: ${err.response.data.password1.join(' ')}`;
+        } else if (err.response.data.non_field_errors) {
+          errorMessage = err.response.data.non_field_errors.join('\n');
+        }
       }
-      Alert.alert('Login Failed', errorMessage);
+      
+      Alert.alert('Registration Failed', errorMessage);
     }
   };
 
@@ -116,9 +145,9 @@ const LoginScreen = () => {
       />
 
       <TextInput
-        placeholder="Phone Number or Email"
-        placeholderTextColor="#9bbfaa"
+        placeholder="Username"
         style={[styles.input, errors.username && styles.inputError]}
+        placeholderTextColor="#9bbfaa"
         value={username}
         onChangeText={(text) => {
           setUsername(text);
@@ -127,26 +156,51 @@ const LoginScreen = () => {
       />
 
       <TextInput
-        placeholder="Password"
+        placeholder="Email"
+        style={[styles.input, errors.email && styles.inputError]}
         placeholderTextColor="#9bbfaa"
-        style={[styles.input, errors.password && styles.inputError]}
-        value={password}
+        value={email}
         onChangeText={(text) => {
-          setPassword(text);
-          setErrors({...errors, password: false});
+          setEmail(text);
+          setErrors({...errors, email: false});
         }}
-        secureTextEntry
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TextInput
+        placeholder="Password"
+        style={[styles.input, errors.password1 && styles.inputError]}
+        placeholderTextColor="#9bbfaa"
+        secureTextEntry
+        value={password1}
+        onChangeText={(text) => {
+          setPassword1(text);
+          setErrors({...errors, password1: false});
+        }}
+      />
+
+      <TextInput
+        placeholder="Confirm Password"
+        style={[styles.input, errors.password2 && styles.inputError]}
+        placeholderTextColor="#9bbfaa"
+        secureTextEntry
+        value={password2}
+        onChangeText={(text) => {
+          setPassword2(text);
+          setErrors({...errors, password2: false});
+        }}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('SignUp')}
+        onPress={() => navigation.navigate('Login')}
       >
-        <Text style={styles.buttonText}>Sign Up</Text>
+        <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
       <GoogleSigninButton
@@ -210,4 +264,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default SignUpScreen;

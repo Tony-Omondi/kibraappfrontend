@@ -14,8 +14,19 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-export const login = (username: string, email: string, password: string) =>
-  api.post('auth/login/', { username, email, password });
+// Login API
+export const login = (username, password) =>
+  api.post('auth/login/', { username, password });
+
+// Registration API
+export const register = (username, email, password1, password2) =>
+  api.post('auth/registration/', {
+    username,
+    email,
+    password1,
+    password2,
+    role: 'user',          // ➡ Always default to "user"
+  });
 
 export const getPosts = () => api.get('api/posts/posts');
 
