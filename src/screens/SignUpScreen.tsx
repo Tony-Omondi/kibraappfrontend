@@ -94,21 +94,24 @@ const SignUpScreen = () => {
     try {
       await register(username, email, password1, password2);
       Alert.alert('Success', 'Account created! Check your email to verify.');
-      navigation.navigate('VerifyEmail'); // Navigate to VerifyEmailScreen
+      navigation.navigate('VerifyEmail');
     } catch (err) {
       console.error(err.response?.data || err.message);
       let errorMessage = 'Registration failed. Please check your details.';
+
       if (err.response?.data) {
-        if (err.response.data.username) {
-          errorMessage = `Username: ${err.response.data.username.join(' ')}`;
-        } else if (err.response.data.email) {
-          errorMessage = `Email: ${err.response.data.email.join(' ')}`;
-        } else if (err.response.data.password1) {
-          errorMessage = `Password: ${err.response.data.password1.join(' ')}`;
-        } else if (err.response.data.non_field_errors) {
-          errorMessage = err.response.data.non_field_errors.join('\n');
+        const data = err.response.data;
+        if (data.username) {
+          errorMessage = `Username: ${data.username.join(' ')}`;
+        } else if (data.email) {
+          errorMessage = `Email: ${data.email.join(' ')}`;
+        } else if (data.password1) {
+          errorMessage = `Password: ${data.password1.join(' ')}`;
+        } else if (data.non_field_errors) {
+          errorMessage = data.non_field_errors.join('\n');
         }
       }
+
       Alert.alert('Registration Failed', errorMessage);
     }
   };
@@ -122,7 +125,7 @@ const SignUpScreen = () => {
       await AsyncStorage.setItem('refresh_token', res.data.refresh);
       await AsyncStorage.setItem('user_id', res.data.user.id.toString());
       Alert.alert('Success', 'Logged in with Google!');
-      navigation.replace('Home');
+      navigation.replace('Profile'); // Changed to Profile for consistency
     } catch (err) {
       console.error(err.response?.data || err.message);
       Alert.alert('Google Login Failed', 'Try again');

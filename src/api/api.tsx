@@ -17,7 +17,7 @@ api.interceptors.request.use(async (config) => {
 
 // Auth APIs
 export const login = (username, password) =>
-  api.post('auth/login/', { username, password });
+  api.post('accounts/login/', { email: username, password }); // Matches login_view
 
 export const register = (username, email, password1, password2) =>
   api.post('auth/registration/', { username, email, password1, password2 });
@@ -25,7 +25,11 @@ export const register = (username, email, password1, password2) =>
 export const verifyEmail = ({ verification_code }) =>
   api.post('auth/verify-email/', { verification_code });
 
-export const getUserProfile = (userId) => api.get(`users/${userId}/`);
+export const getUserProfile = (userId) => api.get(`accounts/users/${userId}/`); // Matches UserViewSet
+
+// Google Login (assumes dj_rest_auth social login endpoint)
+export const googleLogin = (idToken) =>
+  api.post('auth/google/', { id_token: idToken }); // Placeholder; adjust based on backend URL
 
 // Posts
 export const getPosts = () => api.get('api/posts/posts');
